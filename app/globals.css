@@ -179,6 +179,7 @@ button { color: inherit; }
 .scratch-meter b { position: relative; z-index: 1; display: block; font-size: 10px; line-height: 14px; }
 .scratch-ticket.revealed { animation: resultPop .55s cubic-bezier(.2,.85,.25,1.35) both; }
 .game-slot .game-visual { display: flex; justify-content: center; align-items: center; }
+.game-stage.game-slot { min-height: 450px; padding-block: 36px; }
 .slot-area { width: min(460px, 100%); display: flex; flex-direction: column; align-items: center; gap: 0 !important; margin-inline: auto; }
 .slots { display: flex; gap: 8px; padding: 15px; border: 6px solid var(--ink); border-radius: 18px; background: var(--orange); box-shadow: 0 8px 0 var(--ink); }
 .slot-window { width: 84px; height: 96px; overflow: hidden; border: 4px solid var(--ink); border-radius: 10px; background: white; position: relative; }
@@ -190,11 +191,11 @@ button { color: inherit; }
 .slot-window:nth-child(2) .slot-track { transition-duration: 1.95s; }
 .slot-window:nth-child(3) .slot-track { transition-duration: 2.45s; }
 .slot-face { width: 76px; height: 96px; display: grid; place-items: center; font-size: 34px; font-weight: 950; line-height: 1; }
-.slot-legend { display: grid; gap: 7px; width: 100%; margin: 30px auto -5px !important; }
+.slot-legend { display: grid; gap: 7px; width: 100%; margin: 30px auto 0 !important; }
 .slot-legend > span { min-width: 0; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid rgba(36,31,27,.3); border-radius: 8px; background: rgba(255,255,255,.7); overflow: hidden; }
 .slot-legend i { flex: 0 0 20px; height: 20px; display: grid; place-items: center; border: 1px solid var(--ink); border-radius: 50%; font-size: 9px; font-style: normal; font-weight: 950; }
 .slot-legend b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; }
-.game-slot > p { margin-top: 3px !important; }
+.game-slot > p { margin-top: 22px !important; }
 
 .result { margin: 70px 0 40px; padding: 55px 20px; text-align: center; border: 2px solid var(--ink); border-radius: 26px; background: var(--orange); color: white; box-shadow: 9px 9px 0 var(--ink); scroll-margin-top: 90px; }
 .result-kicker { display: inline-block; padding: 6px 10px; background: var(--yellow); color: var(--ink); border-radius: 7px; font-size: 12px; font-weight: 900; }
@@ -217,6 +218,7 @@ footer strong { color: var(--ink); } footer small { margin-left: auto; }
   .game-picker button { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 8px 5px; }
   .game-picker button > span { grid-row: auto; }.game-picker small { display: none; }.game-picker strong { font-size: 11px; }
   .game-stage { min-height: 370px; }
+  .game-stage.game-slot { min-height: 420px; padding-block: 30px; }
 }
 
 @media (max-width: 520px) {

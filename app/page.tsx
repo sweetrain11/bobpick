@@ -79,6 +79,8 @@ const games = [
   { id: "slot", icon: "▥", name: "슬롯머신", copy: "세 칸이 멈추면 결정" },
 ];
 
+const rouletteColors = ["#f0441e", "#fff4d0", "#4e9588", "#ffc83d", "#e76f51", "#f4ead5"];
+
 const money = (value: number) => new Intl.NumberFormat("ko-KR").format(value) + "원";
 
 function ladderPosition(start: number, rungs: number[], completed = rungs.length) {
@@ -152,6 +154,7 @@ export default function Home() {
   const [ladderResult, setLadderResult] = useState<number | null>(null);
   const [drawReady, setDrawReady] = useState(false);
   const [drawPicked, setDrawPicked] = useState<number | null>(null);
+  const [rouletteRotation, setRouletteRotation] = useState(0);
 
   const results = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -167,6 +170,8 @@ export default function Home() {
   const candidateMenus = restaurant?.menus.filter((menu) => candidates.includes(menu.id)) ?? [];
   const ladderMenus = candidateMenus.slice(0, 6);
   const ladderMarker = ladderPosition(ladderStart, ladderRungs, ladderLevel);
+  const rouletteSlice = 360 / Math.max(1, candidateMenus.length);
+  const rouletteBackground = `conic-gradient(${candidateMenus.map((_, index) => `${rouletteColors[index % rouletteColors.length]} ${index * rouletteSlice}deg ${(index + 1) * rouletteSlice}deg`).join(", ")})`;
   const currentGame = games.find((item) => item.id === game) ?? games[3];
   const step = winner ? 4 : restaurant ? (candidates.length >= 2 ? 3 : 2) : searched ? 1 : 0;
 
@@ -199,6 +204,7 @@ export default function Home() {
     setLadderOpen(false);
     setLadderResult(null);
     setLadderRungs([]);
+    setRouletteRotation(0);
     window.setTimeout(() => document.getElementById("menu-section")?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
@@ -212,6 +218,7 @@ export default function Home() {
     setLadderOpen(false);
     setLadderResult(null);
     setLadderRungs([]);
+    setRouletteRotation(0);
   }
 
   function randomMenu() {
@@ -279,13 +286,22 @@ export default function Home() {
       return;
     }
     const picked = randomMenu();
+    if (game === "roulette") {
+      const pickedIndex = candidateMenus.findIndex((menu) => menu.id === picked.id);
+      const target = (360 - (pickedIndex + 0.5) * rouletteSlice) % 360;
+      setRouletteRotation((current) => {
+        const currentMod = ((current % 360) + 360) % 360;
+        const alignment = (target - currentMod + 360) % 360;
+        return current + 360 * 6 + alignment;
+      });
+    }
     setPlaying(true);
     setWinner(null);
     window.setTimeout(() => {
       setWinner(picked);
       setPlaying(false);
       window.setTimeout(() => document.getElementById("result")?.scrollIntoView({ behavior: "smooth" }), 60);
-    }, game === "roulette" ? 2200 : 1600);
+    }, game === "roulette" ? 3000 : 1600);
   }
 
   function resetAll() {
@@ -299,6 +315,7 @@ export default function Home() {
     setLadderOpen(false);
     setLadderResult(null);
     setLadderRungs([]);
+    setRouletteRotation(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -419,7 +436,24 @@ export default function Home() {
               <div className={`game-stage game-${game} ${playing ? "playing" : ""}`}>
                 <span className="stage-label">{currentGame.name}</span>
                 <div className="game-visual">
-                  {game === "roulette" && <div className="roulette"><span /></div>}
+                  {game === "roulette" && (
+                    <div className="roulette-area">
+                      <div className="roulette-shell">
+                        <div className="roulette" style={{ background: rouletteBackground, transform: `rotate(${rouletteRotation}deg)` }}>
+                          {candidateMenus.map((menu, index) => {
+                            const angle = (index + 0.5) * rouletteSlice;
+                            const radians = (angle * Math.PI) / 180;
+                            const darkSlice = [0, 2, 4].includes(index % rouletteColors.length);
+                            return <b className="roulette-label" key={menu.id} style={{ left: `${50 + Math.sin(radians) * 27}%`, top: `${50 - Math.cos(radians) * 27}%`, background: rouletteColors[index % rouletteColors.length], color: darkSlice ? "white" : "var(--ink)" }}>{index + 1}</b>;
+                          })}
+                          <span />
+                        </div>
+                      </div>
+                      <div className="roulette-legend" style={{ gridTemplateColumns: `repeat(${Math.min(candidateMenus.length, 3)}, 1fr)` }}>
+                        {candidateMenus.map((menu, index) => <span key={menu.id}><i style={{ background: rouletteColors[index % rouletteColors.length] }}>{index + 1}</i><b title={menu.name}>{menu.name}</b></span>)}
+                      </div>
+                    </div>
+                  )}
                   {game === "ladder" && (
                     <div className={`ladder-wrap ${ladderOpen ? "open" : "covered"}`}>
                       <div className="ladder-starts" style={{ gridTemplateColumns: `repeat(${ladderMenus.length}, 1fr)` }}>

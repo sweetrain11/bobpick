@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
 type Menu = { id: string; name: string; price: number; note: string };
 type Restaurant = {
@@ -157,6 +157,14 @@ export default function Home() {
   const [rouletteRotation, setRouletteRotation] = useState(0);
   const [slotOffsets, setSlotOffsets] = useState([0, 0, 0]);
   const [slotRound, setSlotRound] = useState(0);
+  const [scratchMenu, setScratchMenu] = useState<Menu | null>(null);
+  const [scratchStarted, setScratchStarted] = useState(false);
+  const [scratchRevealed, setScratchRevealed] = useState(false);
+  const [scratchProgress, setScratchProgress] = useState(0);
+  const scratchCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const scratchDrawingRef = useRef(false);
+  const scratchLastPointRef = useRef<{ x: number; y: number } | null>(null);
+  const scratchClearedRef = useRef<Set<number>>(new Set());
 
   const results = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -192,9 +200,45 @@ export default function Home() {
     return () => window.clearInterval(timer);
   }, [playing, game, ladderRungs.length]);
 
+  useEffect(() => {
+    const canvas = scratchCanvasRef.current;
+    if (!canvas || !scratchStarted || !scratchMenu || scratchRevealed) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.globalCompositeOperation = "source-over";
+    const coating = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+    coating.addColorStop(0, "#aaa7a1");
+    coating.addColorStop(0.48, "#e4e0d9");
+    coating.addColorStop(1, "#96938d");
+    context.fillStyle = coating;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.strokeStyle = "rgba(255,255,255,.28)";
+    context.lineWidth = 3;
+    for (let x = -canvas.height; x < canvas.width; x += 34) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x + canvas.height, canvas.height);
+      context.stroke();
+    }
+    context.fillStyle = "#34312d";
+    context.font = "900 30px sans-serif";
+    context.textAlign = "center";
+    context.fillText("동전을 움직여 긁어보세요", canvas.width / 2, canvas.height / 2 + 10);
+  }, [scratchStarted, scratchMenu, scratchRevealed]);
+
   function search() {
     setSearched(true);
     setWinner(null);
+  }
+
+  function resetScratch() {
+    setScratchMenu(null);
+    setScratchStarted(false);
+    setScratchRevealed(false);
+    setScratchProgress(0);
+    scratchDrawingRef.current = false;
+    scratchLastPointRef.current = null;
+    scratchClearedRef.current.clear();
   }
 
   function chooseRestaurant(item: Restaurant) {
@@ -208,6 +252,7 @@ export default function Home() {
     setLadderRungs([]);
     setRouletteRotation(0);
     setSlotOffsets([0, 0, 0]);
+    resetScratch();
     window.setTimeout(() => document.getElementById("menu-section")?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
@@ -223,6 +268,7 @@ export default function Home() {
     setLadderRungs([]);
     setRouletteRotation(0);
     setSlotOffsets([0, 0, 0]);
+    resetScratch();
   }
 
   function randomMenu() {
@@ -256,6 +302,101 @@ export default function Home() {
     }, 950);
   }
 
+  function revealScratch() {
+    if (!scratchMenu || scratchRevealed) return;
+    const canvas = scratchCanvasRef.current;
+    canvas?.getContext("2d")?.clearRect(0, 0, canvas.width, canvas.height);
+    scratchDrawingRef.current = false;
+    setScratchProgress(100);
+    setScratchRevealed(true);
+    setWinner(scratchMenu);
+    window.setTimeout(() => document.getElementById("result")?.scrollIntoView({ behavior: "smooth" }), 850);
+  }
+
+  function startScratch() {
+    const picked = randomMenu();
+    setWinner(null);
+    setScratchMenu(picked);
+    setScratchProgress(0);
+    setScratchRevealed(false);
+    setScratchStarted(true);
+    scratchClearedRef.current.clear();
+  }
+
+  function scratchPoint(event: ReactPointerEvent<HTMLCanvasElement>) {
+    const canvas = event.currentTarget;
+    const bounds = canvas.getBoundingClientRect();
+    return {
+      x: ((event.clientX - bounds.left) / bounds.width) * canvas.width,
+      y: ((event.clientY - bounds.top) / bounds.height) * canvas.height,
+    };
+  }
+
+  function eraseScratchLine(canvas: HTMLCanvasElement, from: { x: number; y: number }, to: { x: number; y: number }) {
+    const context = canvas.getContext("2d");
+    if (!context) return 0;
+    context.globalCompositeOperation = "destination-out";
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.lineWidth = 70;
+    context.beginPath();
+    context.moveTo(from.x, from.y);
+    context.lineTo(to.x, to.y);
+    context.stroke();
+
+    const grid = 12;
+    const radius = 35;
+    const columns = Math.ceil(canvas.width / grid);
+    const rows = Math.ceil(canvas.height / grid);
+    const minColumn = Math.max(0, Math.floor((Math.min(from.x, to.x) - radius) / grid));
+    const maxColumn = Math.min(columns - 1, Math.ceil((Math.max(from.x, to.x) + radius) / grid));
+    const minRow = Math.max(0, Math.floor((Math.min(from.y, to.y) - radius) / grid));
+    const maxRow = Math.min(rows - 1, Math.ceil((Math.max(from.y, to.y) + radius) / grid));
+    const deltaX = to.x - from.x;
+    const deltaY = to.y - from.y;
+    const lineLengthSquared = deltaX * deltaX + deltaY * deltaY || 1;
+
+    for (let row = minRow; row <= maxRow; row += 1) {
+      for (let column = minColumn; column <= maxColumn; column += 1) {
+        const pointX = column * grid + grid / 2;
+        const pointY = row * grid + grid / 2;
+        const ratio = Math.max(0, Math.min(1, ((pointX - from.x) * deltaX + (pointY - from.y) * deltaY) / lineLengthSquared));
+        const nearestX = from.x + ratio * deltaX;
+        const nearestY = from.y + ratio * deltaY;
+        if (Math.hypot(pointX - nearestX, pointY - nearestY) <= radius) {
+          scratchClearedRef.current.add(row * columns + column);
+        }
+      }
+    }
+    return (scratchClearedRef.current.size / (columns * rows)) * 100;
+  }
+
+  function beginScratch(event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (!scratchStarted || scratchRevealed) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const point = scratchPoint(event);
+    scratchDrawingRef.current = true;
+    scratchLastPointRef.current = point;
+    const progress = eraseScratchLine(event.currentTarget, point, { x: point.x + 0.1, y: point.y });
+    setScratchProgress(progress);
+  }
+
+  function moveScratch(event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (!scratchDrawingRef.current || scratchRevealed) return;
+    const point = scratchPoint(event);
+    const previous = scratchLastPointRef.current ?? point;
+    const progress = eraseScratchLine(event.currentTarget, previous, point);
+    scratchLastPointRef.current = point;
+    setScratchProgress(progress);
+    if (progress >= 35) revealScratch();
+  }
+
+  function endScratch(event: ReactPointerEvent<HTMLCanvasElement>) {
+    if (!scratchDrawingRef.current) return;
+    scratchDrawingRef.current = false;
+    scratchLastPointRef.current = null;
+  }
+
   function runLadder(startIndex: number) {
     if (ladderMenus.length < 2 || playing) return;
     const targetIndex = secureRandom(ladderMenus.length);
@@ -287,6 +428,11 @@ export default function Home() {
     }
     if (game === "draw") {
       shuffleDraw();
+      return;
+    }
+    if (game === "scratch") {
+      if (scratchStarted && !scratchRevealed) revealScratch();
+      else startScratch();
       return;
     }
     const picked = randomMenu();
@@ -335,6 +481,7 @@ export default function Home() {
     setLadderRungs([]);
     setRouletteRotation(0);
     setSlotOffsets([0, 0, 0]);
+    resetScratch();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -447,7 +594,7 @@ export default function Home() {
             <div className="game-layout">
               <div className="game-picker" role="radiogroup" aria-label="게임 선택">
                 {games.map((item) => (
-                  <button key={item.id} role="radio" aria-checked={game === item.id} className={game === item.id ? "active" : ""} onClick={() => { setGame(item.id); setWinner(null); setDrawReady(false); setDrawPicked(null); setLadderOpen(false); setLadderResult(null); setLadderRungs([]); }}>
+                  <button key={item.id} role="radio" aria-checked={game === item.id} className={game === item.id ? "active" : ""} onClick={() => { setGame(item.id); setWinner(null); setDrawReady(false); setDrawPicked(null); setLadderOpen(false); setLadderResult(null); setLadderRungs([]); resetScratch(); }}>
                     <span>{item.icon}</span><strong>{item.name}</strong><small>{item.copy}</small>
                   </button>
                 ))}
@@ -546,7 +693,41 @@ export default function Home() {
                       ))}
                     </div>
                   )}
-                  {game === "scratch" && <div className="scratch-card"><b>오늘의 메뉴</b><span>긁어서 확인</span></div>}
+                  {game === "scratch" && (
+                    <div className="scratch-area">
+                      <div className={`scratch-ticket ${scratchRevealed ? "revealed" : ""}`}>
+                        {scratchStarted && scratchMenu ? (
+                          <div className="scratch-prize" aria-hidden={!scratchRevealed}>
+                            <strong>{scratchMenu.name}</strong>
+                          </div>
+                        ) : (
+                          <>
+                            <strong>행운의 한 끼</strong>
+                            <small>시작 버튼을 눌러 복권을 받아보세요.</small>
+                          </>
+                        )}
+                        {scratchStarted && !scratchRevealed && (
+                          <canvas
+                            ref={scratchCanvasRef}
+                            width={680}
+                            height={360}
+                            className="scratch-canvas"
+                            aria-label="은색 코팅을 긁어 메뉴 확인"
+                            onPointerDown={beginScratch}
+                            onPointerMove={moveScratch}
+                            onPointerUp={endScratch}
+                            onPointerCancel={endScratch}
+                          />
+                        )}
+                      </div>
+                      {scratchStarted && !scratchRevealed && (
+                        <div className="scratch-meter" aria-label={`긁기 진행률 ${Math.round(scratchProgress)}퍼센트`}>
+                          <span style={{ width: `${Math.min(100, scratchProgress)}%` }} />
+                          <b>{Math.round(scratchProgress)}%</b>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {game === "slot" && (
                     <div className="slot-area">
                       <div className="slots" key={slotRound} aria-label="메뉴 슬롯머신">
@@ -584,12 +765,18 @@ export default function Home() {
                     ? playing
                       ? drawPicked === null ? "제비를 골고루 섞는 중이에요…" : "선택한 제비를 확인하고 있어요!"
                       : drawReady ? "마음이 가는 제비 한 장을 직접 골라보세요." : "먼저 제비를 섞어볼까요?"
+                    : game === "scratch"
+                    ? scratchStarted && !scratchRevealed
+                      ? `은색 코팅을 35% 이상 긁어보세요. 현재 ${Math.round(scratchProgress)}%`
+                      : scratchRevealed ? "복권의 메뉴가 공개됐어요!" : "복권을 받고 직접 긁어 메뉴를 확인해보세요."
                     : playing ? "두근두근… 메뉴를 고르는 중이에요!" : `${candidateMenus.length}개 후보 중 하나를 골라볼게요.`}
                 </p>
                 {game !== "ladder" && (
                   <button className="play-button" onClick={runGame} disabled={playing}>
                     {game === "draw"
                       ? playing ? drawPicked === null ? "섞는 중…" : "확인 중…" : drawReady ? "다시 섞기" : "제비 섞기"
+                      : game === "scratch"
+                      ? scratchStarted && !scratchRevealed ? "한 번에 확인" : "복권 시작"
                       : playing ? "결정 중…" : `${currentGame.name} 시작`}
                   </button>
                 )}

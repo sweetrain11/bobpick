@@ -161,10 +161,19 @@ button { color: inherit; }
 .draw-card.picked ~ .draw-card { opacity: .42; }
 @keyframes drawShuffle { from { transform: translate3d(-16px,8px,0) rotate(-8deg); } to { transform: translate3d(16px,-10px,0) rotate(9deg); } }
 @keyframes drawReady { from { transform: translateY(18px) rotate(3deg); opacity: .5; } to { transform: translateY(0) rotate(0); opacity: 1; } }
-.scratch-card { width: 280px; height: 155px; display: grid; place-items: center; align-content: center; gap: 10px; border: 4px solid var(--ink); border-radius: 14px; background: repeating-linear-gradient(135deg,#bbb 0 8px,#ddd 8px 16px); box-shadow: 6px 6px 0 var(--ink); }
-.scratch-card b { font-size: 22px; }.scratch-card span { padding: 7px 10px; background: var(--ink); color: white; font-size: 11px; }
-.playing .scratch-card { animation: scratch .15s infinite alternate; }
-@keyframes scratch { to { transform: translateX(5px) rotate(1deg); filter: brightness(1.15); } }
+.game-scratch .game-visual { display: flex; align-items: center; justify-content: center; }
+.scratch-area { width: min(380px,100%); display: grid; justify-items: center; gap: 10px; margin-inline: auto; }
+.scratch-ticket { width: 340px; max-width: 100%; height: 180px; position: relative; overflow: hidden; display: grid; place-items: center; align-content: center; gap: 7px; border: 4px solid var(--ink); border-radius: 16px; background: #fff4d0; box-shadow: 6px 7px 0 var(--ink); }
+.scratch-ticket::before, .scratch-ticket::after { content: ""; position: absolute; top: 50%; width: 22px; height: 22px; border: 3px solid var(--ink); border-radius: 50%; background: var(--yellow); transform: translateY(-50%); z-index: 2; }
+.scratch-ticket::before { left: -14px; }.scratch-ticket::after { right: -14px; }
+.scratch-prize { width: 100%; height: 100%; display: grid; place-items: center; text-align: center; }
+.scratch-ticket strong { max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 22px; }
+.scratch-ticket small { color: var(--muted); font-size: 11px; }
+.scratch-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; touch-action: none; cursor: crosshair; }
+.scratch-meter { width: min(330px,95%); height: 18px; position: relative; overflow: hidden; border: 2px solid var(--ink); border-radius: 20px; background: rgba(255,255,255,.7); text-align: center; }
+.scratch-meter span { position: absolute; inset: 0 auto 0 0; background: var(--orange); transition: width .15s ease; }
+.scratch-meter b { position: relative; z-index: 1; display: block; font-size: 10px; line-height: 14px; }
+.scratch-ticket.revealed { animation: resultPop .55s cubic-bezier(.2,.85,.25,1.35) both; }
 .game-slot .game-visual { display: flex; justify-content: center; align-items: center; }
 .slot-area { width: min(460px, 100%); display: flex; flex-direction: column; align-items: center; gap: 0 !important; margin-inline: auto; }
 .slots { display: flex; gap: 8px; padding: 15px; border: 6px solid var(--ink); border-radius: 18px; background: var(--orange); box-shadow: 0 8px 0 var(--ink); }

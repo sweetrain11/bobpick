@@ -84,10 +84,57 @@ const money = (value: number) => new Intl.NumberFormat("ko-KR").format(value) + 
 function ladderPosition(start: number, rungs: number[], completed = rungs.length) {
   let position = start;
   rungs.slice(0, completed).forEach((from) => {
+    if (from < 0) return;
     if (position === from) position += 1;
     else if (position === from + 1) position -= 1;
   });
   return position;
+}
+
+function secureRandom(max: number) {
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  return values[0] % max;
+}
+
+function createHiddenLadder(start: number, target: number, count: number) {
+  const rungs: number[] = [];
+  const moves: number[] = [];
+  let position = start;
+  while (position < target) {
+    moves.push(position);
+    position += 1;
+  }
+  while (position > target) {
+    moves.push(position - 1);
+    position -= 1;
+  }
+  position = start;
+  const levelCount = Math.max(8, moves.length * 2 + 1);
+  const moveLevels = moves.map((_, index) => Math.round(((index + 1) * levelCount) / (moves.length + 1)) - 1);
+  let moveIndex = 0;
+  let previous = -1;
+  for (let level = 0; level < levelCount; level += 1) {
+    if (moveIndex < moves.length && moveLevels[moveIndex] === level) {
+      const from = moves[moveIndex];
+      rungs.push(from);
+      position += target > start ? 1 : -1;
+      previous = from;
+      moveIndex += 1;
+      continue;
+    }
+    const safe = Array.from({ length: count - 1 }, (_, index) => index)
+      .filter((from) => from !== position && from + 1 !== position && from !== previous);
+    if (safe.length) {
+      const from = safe[(level + secureRandom(safe.length)) % safe.length];
+      rungs.push(from);
+      previous = from;
+    } else {
+      rungs.push(-1);
+      previous = -1;
+    }
+  }
+  return rungs;
 }
 
 export default function Home() {
@@ -100,6 +147,9 @@ export default function Home() {
   const [winner, setWinner] = useState<Menu | null>(null);
   const [ladderStart, setLadderStart] = useState(0);
   const [ladderLevel, setLadderLevel] = useState(0);
+  const [ladderRungs, setLadderRungs] = useState<number[]>([]);
+  const [ladderOpen, setLadderOpen] = useState(false);
+  const [ladderResult, setLadderResult] = useState<number | null>(null);
   const [drawReady, setDrawReady] = useState(false);
   const [drawPicked, setDrawPicked] = useState<number | null>(null);
 
@@ -116,12 +166,6 @@ export default function Home() {
 
   const candidateMenus = restaurant?.menus.filter((menu) => candidates.includes(menu.id)) ?? [];
   const ladderMenus = candidateMenus.slice(0, 6);
-  const ladderRungs = useMemo(() => {
-    const count = ladderMenus.length;
-    if (count < 2) return [];
-    const pattern = [0, 2, 1, 3, 0, 4, 2, 1];
-    return pattern.slice(0, Math.max(5, count + 1)).map((value) => value % (count - 1));
-  }, [ladderMenus.length]);
   const ladderMarker = ladderPosition(ladderStart, ladderRungs, ladderLevel);
   const currentGame = games.find((item) => item.id === game) ?? games[3];
   const step = winner ? 4 : restaurant ? (candidates.length >= 2 ? 3 : 2) : searched ? 1 : 0;
@@ -152,6 +196,9 @@ export default function Home() {
     setWinner(null);
     setDrawReady(false);
     setDrawPicked(null);
+    setLadderOpen(false);
+    setLadderResult(null);
+    setLadderRungs([]);
     window.setTimeout(() => document.getElementById("menu-section")?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
@@ -162,6 +209,9 @@ export default function Home() {
     setWinner(null);
     setDrawReady(false);
     setDrawPicked(null);
+    setLadderOpen(false);
+    setLadderResult(null);
+    setLadderRungs([]);
   }
 
   function randomMenu() {
@@ -195,26 +245,47 @@ export default function Home() {
     }, 950);
   }
 
+  function runLadder(startIndex: number) {
+    if (ladderMenus.length < 2 || playing) return;
+    const targetIndex = secureRandom(ladderMenus.length);
+    const nextRungs = createHiddenLadder(startIndex, targetIndex, ladderMenus.length);
+    const picked = ladderMenus[targetIndex];
+    setLadderStart(startIndex);
+    setLadderLevel(0);
+    setLadderRungs(nextRungs);
+    setLadderResult(targetIndex);
+    setLadderOpen(true);
+    setWinner(null);
+    setPlaying(true);
+    window.setTimeout(() => {
+      setWinner(picked);
+      setPlaying(false);
+      window.setTimeout(() => document.getElementById("result")?.scrollIntoView({ behavior: "smooth" }), 700);
+    }, Math.max(1900, nextRungs.length * 280 + 250));
+  }
+
   function runGame() {
     if (candidateMenus.length < 2 || playing) return;
+    if (game === "ladder") {
+      setWinner(null);
+      setLadderOpen(false);
+      setLadderResult(null);
+      setLadderRungs([]);
+      document.getElementById("game-section")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
     if (game === "draw") {
       shuffleDraw();
       return;
     }
     const picked = randomMenu();
-    if (game === "ladder") {
-      const target = ladderMenus.findIndex((menu) => menu.id === picked.id);
-      const matchingStart = ladderMenus.findIndex((_, index) => ladderPosition(index, ladderRungs) === target);
-      setLadderStart(Math.max(0, matchingStart));
-      setLadderLevel(0);
-    }
     setPlaying(true);
     setWinner(null);
     window.setTimeout(() => {
       setWinner(picked);
       setPlaying(false);
       window.setTimeout(() => document.getElementById("result")?.scrollIntoView({ behavior: "smooth" }), 60);
-    }, game === "roulette" || game === "ladder" ? 2200 : 1600);
+    }, game === "roulette" ? 2200 : 1600);
   }
 
   function resetAll() {
@@ -225,6 +296,9 @@ export default function Home() {
     setWinner(null);
     setDrawReady(false);
     setDrawPicked(null);
+    setLadderOpen(false);
+    setLadderResult(null);
+    setLadderRungs([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -337,7 +411,7 @@ export default function Home() {
             <div className="game-layout">
               <div className="game-picker" role="radiogroup" aria-label="게임 선택">
                 {games.map((item) => (
-                  <button key={item.id} role="radio" aria-checked={game === item.id} className={game === item.id ? "active" : ""} onClick={() => { setGame(item.id); setWinner(null); setDrawReady(false); setDrawPicked(null); }}>
+                  <button key={item.id} role="radio" aria-checked={game === item.id} className={game === item.id ? "active" : ""} onClick={() => { setGame(item.id); setWinner(null); setDrawReady(false); setDrawPicked(null); setLadderOpen(false); setLadderResult(null); setLadderRungs([]); }}>
                     <span>{item.icon}</span><strong>{item.name}</strong><small>{item.copy}</small>
                   </button>
                 ))}
@@ -347,25 +421,37 @@ export default function Home() {
                 <div className="game-visual">
                   {game === "roulette" && <div className="roulette"><span /></div>}
                   {game === "ladder" && (
-                    <div className="ladder-wrap">
+                    <div className={`ladder-wrap ${ladderOpen ? "open" : "covered"}`}>
+                      <div className="ladder-starts" style={{ gridTemplateColumns: `repeat(${ladderMenus.length}, 1fr)` }}>
+                        {ladderMenus.map((menu, index) => (
+                          <button
+                            type="button"
+                            key={menu.id}
+                            onClick={() => runLadder(index)}
+                            disabled={playing || ladderOpen}
+                            aria-label={`${index + 1}번 위치에서 사다리 시작`}
+                          >
+                            {index + 1}
+                          </button>
+                        ))}
+                      </div>
                       <div className="ladder-board">
                         {ladderMenus.map((menu, index) => {
-                          const left = `${(index / (ladderMenus.length - 1)) * 100}%`;
+                          const left = `${((index + 0.5) / ladderMenus.length) * 100}%`;
                           return (
                             <span className="ladder-column" style={{ left }} key={menu.id}>
-                              <b>{menu.name.slice(0, 4)}</b>
                               <i />
                             </span>
                           );
                         })}
-                        {ladderRungs.map((from, index) => (
+                        {ladderRungs.map((from, index) => from < 0 ? null : (
                           <span
                             className="ladder-rung"
                             key={`${from}-${index}`}
                             style={{
-                              left: `${(from / (ladderMenus.length - 1)) * 100}%`,
+                              left: `${((from + 0.5) / ladderMenus.length) * 100}%`,
                               top: `${((index + 1) / (ladderRungs.length + 1)) * 100}%`,
-                              width: `${100 / (ladderMenus.length - 1)}%`,
+                              width: `${100 / ladderMenus.length}%`,
                             }}
                           />
                         ))}
@@ -373,11 +459,18 @@ export default function Home() {
                           <span
                             className="ladder-runner"
                             style={{
-                              left: `${(ladderMarker / (ladderMenus.length - 1)) * 100}%`,
+                              left: `${((ladderMarker + 0.5) / ladderMenus.length) * 100}%`,
                               top: `${(ladderLevel / (ladderRungs.length + 1)) * 100}%`,
                             }}
                           />
                         )}
+                        <div className="ladder-curtain" aria-hidden="true" />
+                      </div>
+                      <div className="ladder-results" style={{ gridTemplateColumns: `repeat(${ladderMenus.length}, 1fr)` }}>
+                        {ladderMenus.map((menu, index) => {
+                          const revealed = ladderOpen && !playing && ladderResult === index;
+                          return <b className={revealed ? "revealed" : ""} key={menu.id} title={revealed ? menu.name : "비공개"}>{revealed ? menu.name : "?"}</b>;
+                        })}
                       </div>
                     </div>
                   )}
@@ -404,17 +497,21 @@ export default function Home() {
                   {game === "slot" && <div className="slots"><i>밥</i><i>면</i><i>픽</i></div>}
                 </div>
                 <p>
-                  {game === "draw"
+                  {game === "ladder"
+                    ? playing ? "선택한 번호에서 경로를 따라 내려가는 중이에요!" : "위의 숫자를 눌러 출발 위치를 선택하세요."
+                    : game === "draw"
                     ? playing
                       ? drawPicked === null ? "제비를 골고루 섞는 중이에요…" : "선택한 제비를 확인하고 있어요!"
                       : drawReady ? "마음이 가는 제비 한 장을 직접 골라보세요." : "먼저 제비를 섞어볼까요?"
                     : playing ? "두근두근… 메뉴를 고르는 중이에요!" : `${candidateMenus.length}개 후보 중 하나를 골라볼게요.`}
                 </p>
-                <button className="play-button" onClick={runGame} disabled={playing}>
-                  {game === "draw"
-                    ? playing ? drawPicked === null ? "섞는 중…" : "확인 중…" : drawReady ? "다시 섞기" : "제비 섞기"
-                    : playing ? "결정 중…" : `${currentGame.name} 시작`}
-                </button>
+                {game !== "ladder" && (
+                  <button className="play-button" onClick={runGame} disabled={playing}>
+                    {game === "draw"
+                      ? playing ? drawPicked === null ? "섞는 중…" : "확인 중…" : drawReady ? "다시 섞기" : "제비 섞기"
+                      : playing ? "결정 중…" : `${currentGame.name} 시작`}
+                  </button>
+                )}
               </div>
             </div>
           </section>

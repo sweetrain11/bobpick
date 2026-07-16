@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+:root {
+  --cream: #fff8e9;
+  --paper: #fffdf7;
+  --orange: #f0441e;
+  --orange-dark: #c92c10;
+  --ink: #241f1b;
+  --muted: #776e64;
+  --line: #e7ddca;
+  --yellow: #ffc83d;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--cream); color: var(--ink); font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+button, input { font: inherit; }
+button { color: inherit; }
+
+.topbar { height: 68px; padding: 0 max(24px, calc((100vw - 1180px) / 2)); display: flex; align-items: center; gap: 28px; border-bottom: 1px solid rgba(36,31,27,.12); background: rgba(255,253,247,.88); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 20; }
+.brand { display: flex; align-items: center; gap: 9px; border: 0; background: none; cursor: pointer; font-size: 21px; font-weight: 900; letter-spacing: -1px; }
+.brand-mark { display: grid; place-items: center; width: 32px; height: 32px; background: var(--orange); color: white; border-radius: 10px 10px 14px 14px; transform: rotate(-4deg); font-size: 16px; }
+.topbar p { color: var(--muted); font-size: 13px; }
+.today { margin-left: auto; padding: 7px 12px; border: 1px solid var(--line); border-radius: 99px; font-size: 12px; font-weight: 700; background: white; }
+
+.hero { padding: 70px 24px 34px; text-align: center; overflow: hidden; position: relative; background: radial-gradient(circle at 10% 10%, rgba(255,200,61,.18), transparent 28%), radial-gradient(circle at 90% 40%, rgba(240,68,30,.08), transparent 26%); }
+.hero::before, .hero::after { content: ""; position: absolute; border: 2px solid var(--ink); opacity: .12; transform: rotate(12deg); }
+.hero::before { width: 110px; height: 110px; border-radius: 50%; left: 5vw; top: 60px; box-shadow: inset 0 0 0 16px var(--yellow); }
+.hero::after { width: 80px; height: 110px; right: 7vw; top: 90px; border-radius: 12px; transform: rotate(-10deg); }
+.eyebrow { display: flex; justify-content: center; align-items: center; gap: 8px; color: var(--orange-dark); font-size: 12px; font-weight: 900; letter-spacing: 2px; }
+.eyebrow span { width: 22px; height: 3px; background: var(--orange); }
+.hero h1 { margin: 14px 0 12px; font-size: clamp(48px, 7vw, 82px); line-height: .95; letter-spacing: -6px; font-weight: 950; }
+.hero-copy { margin: 0; color: #665d54; line-height: 1.65; font-size: 16px; }
+.search-box { width: min(690px, 100%); margin: 32px auto 0; text-align: left; }
+.search-box > label { display: block; margin: 0 0 9px 3px; font-size: 12px; font-weight: 800; }
+.search-row { display: flex; align-items: center; padding: 7px 7px 7px 20px; background: white; border: 2px solid var(--ink); border-radius: 18px; box-shadow: 7px 7px 0 var(--ink); }
+.search-row > span { font-size: 26px; transform: rotate(-18deg); }
+.search-row input { flex: 1; min-width: 0; border: 0; outline: none; padding: 12px; background: transparent; font-size: 16px; }
+.search-row button, .play-button { border: 0; border-radius: 12px; background: var(--orange); color: white; padding: 14px 20px; font-weight: 900; cursor: pointer; box-shadow: inset 0 -3px 0 rgba(0,0,0,.15); }
+.search-row button:hover, .play-button:hover { background: var(--orange-dark); }
+.quick-search { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; justify-content: center; }
+.quick-search button { border: 1px solid var(--line); background: rgba(255,255,255,.6); border-radius: 99px; padding: 7px 11px; font-size: 12px; cursor: pointer; }
+.quick-search button:hover { border-color: var(--orange); color: var(--orange-dark); }
+
+.steps { width: min(690px, 100%); margin: 38px auto 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); list-style: none; position: relative; }
+.steps::before { content: ""; position: absolute; left: 12%; right: 12%; top: 15px; height: 2px; background: var(--line); }
+.steps li { position: relative; display: grid; gap: 8px; justify-items: center; color: #998f84; font-size: 11px; font-weight: 800; }
+.steps span { display: grid; place-items: center; width: 31px; height: 31px; border: 2px solid var(--line); border-radius: 50%; background: var(--cream); z-index: 1; }
+.steps li.active { color: var(--ink); }
+.steps li.active span { background: var(--ink); color: white; border-color: var(--ink); }
+
+.content-shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+.section-block { padding: 68px 0 10px; scroll-margin-top: 74px; }
+.section-heading { display: flex; align-items: end; justify-content: space-between; margin-bottom: 24px; gap: 20px; }
+.section-heading h2 { margin: 5px 0 0; font-size: clamp(25px, 4vw, 36px); letter-spacing: -1.8px; }
+.section-heading > p { margin: 0; color: var(--muted); font-size: 13px; }
+.section-heading > p strong { color: var(--orange); font-size: 19px; }
+.section-kicker { color: var(--orange-dark); font-size: 11px; font-weight: 900; letter-spacing: 1.5px; }
+
+.restaurant-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.restaurant-card { display: flex; gap: 17px; align-items: center; padding: 16px; text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; cursor: pointer; transition: .2s ease; }
+.restaurant-card:hover, .restaurant-card.selected { transform: translateY(-3px); border-color: var(--ink); box-shadow: 5px 5px 0 var(--ink); }
+.food-thumb { flex: 0 0 88px; height: 88px; border-radius: 16px; display: grid; place-items: center; color: white; font-size: 28px; background: #e84b2b; position: relative; overflow: hidden; }
+.food-thumb::before { content: ""; width: 60px; height: 60px; position: absolute; border: 9px solid rgba(255,255,255,.8); border-radius: 50%; }
+.food-thumb b { z-index: 1; }
+.thumb-1 { background: #499081; }.thumb-2 { background: #e0a930; }.thumb-3 { background: #6c9150; }
+.card-body { display: grid; flex: 1; min-width: 0; gap: 4px; }
+.card-meta { color: var(--orange-dark); font-size: 11px; font-weight: 900; }
+.card-body strong { font-size: 18px; letter-spacing: -.5px; }
+.card-body small { color: var(--muted); }
+.card-body > span:last-child { color: #5f574f; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.restaurant-card i { font-style: normal; font-size: 11px; font-weight: 800; }
+.empty { padding: 50px; text-align: center; border: 1px dashed #c7bba7; border-radius: 20px; background: rgba(255,255,255,.45); }
+.empty p { color: var(--muted); }
+
+.chosen-restaurant { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; background: var(--ink); color: white; border-radius: 18px; margin-bottom: 18px; }
+.chosen-restaurant > div { display: flex; gap: 15px; align-items: baseline; flex-wrap: wrap; }
+.chosen-restaurant span { color: var(--yellow); font-size: 11px; font-weight: 900; }
+.chosen-restaurant strong { font-size: 20px; }
+.chosen-restaurant small { color: #cfc5b9; }
+.chosen-restaurant button, .menu-toolbar button { border: 1px solid rgba(255,255,255,.3); background: transparent; color: inherit; border-radius: 10px; padding: 8px 12px; cursor: pointer; font-size: 12px; }
+.menu-toolbar { display: flex; align-items: center; justify-content: space-between; margin: 20px 0 13px; }
+.menu-toolbar p { margin: 0; color: var(--muted); font-size: 13px; }
+.menu-toolbar > div { display: flex; gap: 7px; }
+.menu-toolbar button { color: var(--ink); border-color: var(--line); background: white; }
+.menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.menu-card { min-height: 132px; display: grid; align-content: start; gap: 7px; position: relative; padding: 18px; text-align: left; border: 1px solid var(--line); border-radius: 17px; background: rgba(255,255,255,.54); cursor: pointer; }
+.menu-card .check { position: absolute; top: 13px; right: 13px; display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; border: 1px solid var(--line); color: #aaa095; font-weight: 900; }
+.menu-card strong { padding-right: 28px; font-size: 16px; }
+.menu-card small { color: var(--muted); }
+.menu-card b { margin-top: auto; font-size: 13px; }
+.menu-card.checked { border: 2px solid var(--orange); padding: 17px; background: #fff2e9; }
+.menu-card.checked .check { background: var(--orange); color: white; border-color: var(--orange); }
+.warning { padding: 12px 15px; color: #9a310f; background: #ffe7d4; border-radius: 10px; font-size: 13px; }
+
+.game-layout { display: grid; grid-template-columns: 330px 1fr; gap: 18px; align-items: stretch; }
+.game-picker { display: grid; gap: 8px; }
+.game-picker button { display: grid; grid-template-columns: 42px 1fr; gap: 2px 12px; align-items: center; padding: 12px; text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; cursor: pointer; }
+.game-picker button > span { grid-row: span 2; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 11px; background: #eee6d9; font-size: 22px; font-weight: 900; }
+.game-picker small { color: var(--muted); }
+.game-picker button.active { border-color: var(--orange); background: #fff1e8; box-shadow: 3px 3px 0 var(--orange); }
+.game-picker button.active > span { background: var(--orange); color: white; }
+.game-stage { min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; overflow: hidden; border: 2px solid var(--ink); border-radius: 24px; background: #ffd866; box-shadow: 7px 7px 0 var(--ink); position: relative; }
+.stage-label { position: absolute; top: 18px; left: 20px; padding: 7px 10px; background: var(--ink); color: white; border-radius: 7px; font-size: 11px; font-weight: 900; }
+.game-stage > p { margin: 18px 0 15px; font-size: 14px; font-weight: 700; }
+.play-button { min-width: 190px; }
+.play-button:disabled { opacity: .7; cursor: wait; }
+.game-visual { min-height: 185px; display: grid; place-items: center; width: 100%; }
+.roulette { width: 180px; height: 180px; border: 10px solid var(--ink); border-radius: 50%; position: relative; background: conic-gradient(#f0441e 0 45deg, #fff4d0 45deg 90deg, #499081 90deg 135deg, #fff4d0 135deg 180deg, #f0441e 180deg 225deg, #fff4d0 225deg 270deg, #499081 270deg 315deg, #fff4d0 315deg); box-shadow: 0 8px 0 rgba(0,0,0,.17); }
+.roulette::before { content: "▼"; position: absolute; top: -28px; left: 69px; z-index: 2; color: var(--ink); font-size: 28px; }
+.roulette span { position: absolute; width: 34px; height: 34px; left: 63px; top: 63px; border: 8px solid var(--ink); border-radius: 50%; background: var(--yellow); }
+.playing .roulette { animation: spin 2.2s cubic-bezier(.12,.75,.2,1) both; }
+@keyframes spin { to { transform: rotate(1700deg); } }
+.ladder { width: min(440px, 95%); height: 175px; display: flex; justify-content: space-around; border-top: 5px solid var(--ink); border-bottom: 5px solid var(--ink); background: repeating-linear-gradient(90deg, transparent 0 17%, var(--ink) 17% 18%, transparent 18% 34%), repeating-linear-gradient(0deg, transparent 0 30px, var(--ink) 30px 34px, transparent 34px 65px); }
+.ladder i { background: white; border: 2px solid var(--ink); height: 32px; padding: 5px; font-style: normal; font-size: 11px; font-weight: 900; transform: translateY(-18px); }
+.playing .ladder { animation: jiggle .18s infinite alternate; }
+@keyframes jiggle { to { transform: translateY(4px); } }
+.draw-cards { display: flex; gap: 12px; perspective: 600px; }
+.draw-cards i { width: 86px; height: 130px; display: grid; place-items: center; border: 4px solid var(--ink); border-radius: 11px; background: var(--orange); color: white; font-size: 42px; font-style: normal; box-shadow: 5px 6px 0 var(--ink); }
+.playing .draw-cards i { animation: cardflip .5s alternate infinite; }
+.playing .draw-cards i:nth-child(2) { animation-delay: .12s; }.playing .draw-cards i:nth-child(3) { animation-delay: .24s; }
+@keyframes cardflip { to { transform: rotateY(180deg) translateY(-8px); } }
+.scratch-card { width: 280px; height: 155px; display: grid; place-items: center; align-content: center; gap: 10px; border: 4px solid var(--ink); border-radius: 14px; background: repeating-linear-gradient(135deg,#bbb 0 8px,#ddd 8px 16px); box-shadow: 6px 6px 0 var(--ink); }
+.scratch-card b { font-size: 22px; }.scratch-card span { padding: 7px 10px; background: var(--ink); color: white; font-size: 11px; }
+.playing .scratch-card { animation: scratch .15s infinite alternate; }
+@keyframes scratch { to { transform: translateX(5px) rotate(1deg); filter: brightness(1.15); } }
+.slots { display: flex; gap: 6px; padding: 18px; border: 6px solid var(--ink); border-radius: 18px; background: var(--orange); box-shadow: 0 8px 0 var(--ink); }
+.slots i { width: 86px; height: 95px; display: grid; place-items: center; background: white; border: 3px solid var(--ink); border-radius: 8px; font-size: 25px; font-weight: 900; font-style: normal; }
+.playing .slots i { animation: slot .22s infinite; }.playing .slots i:nth-child(2){animation-delay:.07s}.playing .slots i:nth-child(3){animation-delay:.14s}
+@keyframes slot { 50% { transform: translateY(-10px); opacity: .4; } }
+
+.result { margin: 70px 0 40px; padding: 55px 20px; text-align: center; border: 2px solid var(--ink); border-radius: 26px; background: var(--orange); color: white; box-shadow: 9px 9px 0 var(--ink); scroll-margin-top: 90px; }
+.result-kicker { display: inline-block; padding: 6px 10px; background: var(--yellow); color: var(--ink); border-radius: 7px; font-size: 12px; font-weight: 900; }
+.confetti { margin: 14px 0 0; color: var(--yellow); word-spacing: 16px; }.confetti i { color: white; font-style: normal; font-size: 9px; }
+.result h2 { margin: 10px 0 7px; font-size: clamp(38px, 7vw, 68px); letter-spacing: -3px; }
+.result p { margin: 0 0 8px; color: #ffe1d8; }.result > strong { font-size: 18px; }
+.result > div:last-child { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 28px; }
+.result button { border: 2px solid var(--ink); border-radius: 11px; padding: 12px 15px; background: var(--paper); color: var(--ink); font-weight: 900; cursor: pointer; }
+.result .text-button { background: transparent; color: white; border-color: rgba(255,255,255,.6); }
+
+footer { width: min(1180px, calc(100% - 32px)); margin: 80px auto 0; padding: 28px 0 35px; display: flex; gap: 15px; align-items: center; border-top: 1px solid var(--line); color: var(--muted); }
+footer strong { color: var(--ink); } footer small { margin-left: auto; }
+
+@media (max-width: 800px) {
+  .topbar { padding: 0 17px; }.topbar p { display: none; }
+  .hero { padding-top: 50px; }.hero h1 { letter-spacing: -4px; }
+  .restaurant-grid, .game-layout { grid-template-columns: 1fr; }
+  .menu-grid { grid-template-columns: repeat(2, 1fr); }
+  .game-picker { grid-template-columns: repeat(5, 1fr); }
+  .game-picker button { grid-template-columns: 1fr; justify-items: center; text-align: center; padding: 8px 5px; }
+  .game-picker button > span { grid-row: auto; }.game-picker small { display: none; }.game-picker strong { font-size: 11px; }
+  .game-stage { min-height: 370px; }
+}
+
+@media (max-width: 520px) {
+  .today { display: none; }.hero::before,.hero::after { display: none; }
+  .search-row { padding-left: 12px; box-shadow: 5px 5px 0 var(--ink); }.search-row button { padding: 13px 12px; }
+  .steps li { font-size: 9px; }
+  .section-heading { align-items: start; }.section-heading > p { text-align: right; }
+  .restaurant-card { align-items: start; }.food-thumb { flex-basis: 68px; height: 68px; }.restaurant-card i { display: none; }
+  .menu-grid { grid-template-columns: 1fr; }.menu-card { min-height: 112px; }
+  .chosen-restaurant { align-items: start; }.chosen-restaurant > div { display: grid; gap: 4px; }
+  .menu-toolbar { align-items: start; gap: 10px; }.menu-toolbar p { max-width: 55%; }
+  .game-picker { grid-template-columns: repeat(3, 1fr); }.game-stage { padding-inline: 14px; }
+  .draw-cards i { width: 60px; height: 100px; }.draw-cards i:nth-child(4) { display: none; }
+  .slots i { width: 67px; }.ladder { width: 95%; }
+  footer { align-items: start; flex-wrap: wrap; } footer small { width: 100%; margin: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}

@@ -154,6 +154,7 @@ export default function Home() {
   const [ladderResult, setLadderResult] = useState<number | null>(null);
   const [drawReady, setDrawReady] = useState(false);
   const [drawPicked, setDrawPicked] = useState<number | null>(null);
+  const [drawResult, setDrawResult] = useState<Menu | null>(null);
   const [rouletteRotation, setRouletteRotation] = useState(0);
   const [slotOffsets, setSlotOffsets] = useState([0, 0, 0]);
   const [slotRound, setSlotRound] = useState(0);
@@ -181,6 +182,7 @@ export default function Home() {
   const ladderMenus = candidateMenus.slice(0, 6);
   const ladderMarker = ladderPosition(ladderStart, ladderRungs, ladderLevel);
   const rouletteSlice = 360 / Math.max(1, candidateMenus.length);
+  const drawResultIndex = drawResult ? candidateMenus.findIndex((menu) => menu.id === drawResult.id) : -1;
   const rouletteBackground = `conic-gradient(${candidateMenus.map((_, index) => `${rouletteColors[index % rouletteColors.length]} ${index * rouletteSlice}deg ${(index + 1) * rouletteSlice}deg`).join(", ")})`;
   const currentGame = games.find((item) => item.id === game) ?? games[3];
   const step = winner ? 4 : restaurant ? (candidates.length >= 2 ? 3 : 2) : searched ? 1 : 0;
@@ -247,6 +249,7 @@ export default function Home() {
     setWinner(null);
     setDrawReady(false);
     setDrawPicked(null);
+    setDrawResult(null);
     setLadderOpen(false);
     setLadderResult(null);
     setLadderRungs([]);
@@ -263,6 +266,7 @@ export default function Home() {
     setWinner(null);
     setDrawReady(false);
     setDrawPicked(null);
+    setDrawResult(null);
     setLadderOpen(false);
     setLadderResult(null);
     setLadderRungs([]);
@@ -282,6 +286,7 @@ export default function Home() {
     setWinner(null);
     setDrawReady(false);
     setDrawPicked(null);
+    setDrawResult(null);
     setPlaying(true);
     window.setTimeout(() => {
       setPlaying(false);
@@ -293,6 +298,7 @@ export default function Home() {
     if (!drawReady || playing) return;
     const picked = randomMenu();
     setDrawPicked(index);
+    setDrawResult(picked);
     setPlaying(true);
     window.setTimeout(() => {
       setWinner(picked);
@@ -476,6 +482,7 @@ export default function Home() {
     setWinner(null);
     setDrawReady(false);
     setDrawPicked(null);
+    setDrawResult(null);
     setLadderOpen(false);
     setLadderResult(null);
     setLadderRungs([]);
@@ -594,7 +601,7 @@ export default function Home() {
             <div className="game-layout">
               <div className="game-picker" role="radiogroup" aria-label="게임 선택">
                 {games.map((item) => (
-                  <button key={item.id} role="radio" aria-checked={game === item.id} className={game === item.id ? "active" : ""} onClick={() => { setGame(item.id); setWinner(null); setDrawReady(false); setDrawPicked(null); setLadderOpen(false); setLadderResult(null); setLadderRungs([]); resetScratch(); }}>
+                  <button key={item.id} role="radio" aria-checked={game === item.id} className={game === item.id ? "active" : ""} onClick={() => { setGame(item.id); setWinner(null); setDrawReady(false); setDrawPicked(null); setDrawResult(null); setLadderOpen(false); setLadderResult(null); setLadderRungs([]); resetScratch(); }}>
                     <span>{item.icon}</span><strong>{item.name}</strong><small>{item.copy}</small>
                   </button>
                 ))}
@@ -675,22 +682,36 @@ export default function Home() {
                     </div>
                   )}
                   {game === "draw" && (
-                    <div className={`draw-cards ${playing && drawPicked === null ? "shuffling" : ""} ${drawReady ? "ready" : ""}`}>
-                      {candidateMenus.slice(0, 5).map((menu, index) => (
-                        <button
-                          type="button"
-                          className={`draw-card ${drawPicked === index ? "picked" : ""}`}
-                          key={menu.id}
-                          onClick={() => pickDraw(index)}
-                          disabled={!drawReady || playing}
-                          aria-label={`${index + 1}번 제비 선택`}
-                        >
-                          <span className="draw-card-inner">
-                            <i className="draw-card-back"><b>{index + 1}</b><em>?</em></i>
-                            <i className="draw-card-front"><em>★</em><b>당첨!</b></i>
-                          </span>
-                        </button>
-                      ))}
+                    <div className="draw-area">
+                      <div
+                        className={`draw-cards ${playing && drawPicked === null ? "shuffling" : ""} ${drawReady ? "ready" : ""}`}
+                        style={{ gridTemplateColumns: `repeat(${candidateMenus.length}, minmax(0, 1fr))` }}
+                      >
+                        {candidateMenus.map((menu, index) => {
+                          const resultColorIndex = Math.max(0, drawResultIndex) % rouletteColors.length;
+                          const darkResult = [0, 2, 4].includes(resultColorIndex);
+                          return (
+                            <button
+                              type="button"
+                              className={`draw-card ${drawPicked === index ? "picked" : ""}`}
+                              key={menu.id}
+                              onClick={() => pickDraw(index)}
+                              disabled={!drawReady || playing}
+                              aria-label={`${index + 1}번 제비 선택`}
+                            >
+                              <span className="draw-card-inner">
+                                <i className="draw-card-back"><em>?</em></i>
+                                <i className="draw-card-front" style={{ background: rouletteColors[resultColorIndex], color: darkResult ? "white" : "var(--ink)" }}>
+                                  <b>{drawResultIndex >= 0 ? drawResultIndex + 1 : "?"}</b>
+                                </i>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="draw-legend" style={{ gridTemplateColumns: `repeat(${Math.min(candidateMenus.length, 3)}, 1fr)` }}>
+                        {candidateMenus.map((menu, index) => <span key={menu.id}><i style={{ background: rouletteColors[index % rouletteColors.length] }}>{index + 1}</i><b title={menu.name}>{menu.name}</b></span>)}
+                      </div>
                     </div>
                   )}
                   {game === "scratch" && (

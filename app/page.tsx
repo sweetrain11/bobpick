@@ -155,6 +155,8 @@ export default function Home() {
   const [drawReady, setDrawReady] = useState(false);
   const [drawPicked, setDrawPicked] = useState<number | null>(null);
   const [rouletteRotation, setRouletteRotation] = useState(0);
+  const [slotOffsets, setSlotOffsets] = useState([0, 0, 0]);
+  const [slotRound, setSlotRound] = useState(0);
 
   const results = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -205,6 +207,7 @@ export default function Home() {
     setLadderResult(null);
     setLadderRungs([]);
     setRouletteRotation(0);
+    setSlotOffsets([0, 0, 0]);
     window.setTimeout(() => document.getElementById("menu-section")?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
@@ -219,6 +222,7 @@ export default function Home() {
     setLadderResult(null);
     setLadderRungs([]);
     setRouletteRotation(0);
+    setSlotOffsets([0, 0, 0]);
   }
 
   function randomMenu() {
@@ -295,13 +299,27 @@ export default function Home() {
         return current + 360 * 6 + alignment;
       });
     }
+    if (game === "slot") {
+      const pickedIndex = candidateMenus.findIndex((menu) => menu.id === picked.id);
+      setSlotRound((round) => round + 1);
+      setSlotOffsets([0, 0, 0]);
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          setSlotOffsets([
+            candidateMenus.length * 4 + pickedIndex,
+            candidateMenus.length * 5 + pickedIndex,
+            candidateMenus.length * 6 + pickedIndex,
+          ]);
+        });
+      });
+    }
     setPlaying(true);
     setWinner(null);
     window.setTimeout(() => {
       setWinner(picked);
       setPlaying(false);
       window.setTimeout(() => document.getElementById("result")?.scrollIntoView({ behavior: "smooth" }), 60);
-    }, game === "roulette" ? 3000 : 1600);
+    }, game === "roulette" ? 3000 : game === "slot" ? 2700 : 1600);
   }
 
   function resetAll() {
@@ -316,6 +334,7 @@ export default function Home() {
     setLadderResult(null);
     setLadderRungs([]);
     setRouletteRotation(0);
+    setSlotOffsets([0, 0, 0]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -528,7 +547,35 @@ export default function Home() {
                     </div>
                   )}
                   {game === "scratch" && <div className="scratch-card"><b>오늘의 메뉴</b><span>긁어서 확인</span></div>}
-                  {game === "slot" && <div className="slots"><i>밥</i><i>면</i><i>픽</i></div>}
+                  {game === "slot" && (
+                    <div className="slot-area">
+                      <div className="slots" key={slotRound} aria-label="메뉴 슬롯머신">
+                        {slotOffsets.map((offset, reelIndex) => (
+                          <div className="slot-window" key={reelIndex}>
+                            <div className="slot-track" style={{ transform: `translateY(-${offset * 96}px)` }}>
+                              {Array.from({ length: candidateMenus.length * 7 }, (_, step) => {
+                                const menuIndex = step % candidateMenus.length;
+                                const darkFace = [0, 2, 4].includes(menuIndex % rouletteColors.length);
+                                return (
+                                  <span
+                                    className="slot-face"
+                                    aria-hidden="true"
+                                    key={step}
+                                    style={{ background: rouletteColors[menuIndex % rouletteColors.length], color: darkFace ? "white" : "var(--ink)" }}
+                                  >
+                                    {menuIndex + 1}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="slot-legend" style={{ gridTemplateColumns: `repeat(${Math.min(candidateMenus.length, 3)}, 1fr)` }}>
+                        {candidateMenus.map((menu, index) => <span key={menu.id}><i style={{ background: rouletteColors[index % rouletteColors.length] }}>{index + 1}</i><b title={menu.name}>{menu.name}</b></span>)}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <p>
                   {game === "ladder"

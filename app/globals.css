@@ -165,10 +165,23 @@ button { color: inherit; }
 .scratch-card b { font-size: 22px; }.scratch-card span { padding: 7px 10px; background: var(--ink); color: white; font-size: 11px; }
 .playing .scratch-card { animation: scratch .15s infinite alternate; }
 @keyframes scratch { to { transform: translateX(5px) rotate(1deg); filter: brightness(1.15); } }
-.slots { display: flex; gap: 6px; padding: 18px; border: 6px solid var(--ink); border-radius: 18px; background: var(--orange); box-shadow: 0 8px 0 var(--ink); }
-.slots i { width: 86px; height: 95px; display: grid; place-items: center; background: white; border: 3px solid var(--ink); border-radius: 8px; font-size: 25px; font-weight: 900; font-style: normal; }
-.playing .slots i { animation: slot .22s infinite; }.playing .slots i:nth-child(2){animation-delay:.07s}.playing .slots i:nth-child(3){animation-delay:.14s}
-@keyframes slot { 50% { transform: translateY(-10px); opacity: .4; } }
+.game-slot .game-visual { display: flex; justify-content: center; align-items: center; }
+.slot-area { width: min(460px, 100%); display: flex; flex-direction: column; align-items: center; gap: 0 !important; margin-inline: auto; }
+.slots { display: flex; gap: 8px; padding: 15px; border: 6px solid var(--ink); border-radius: 18px; background: var(--orange); box-shadow: 0 8px 0 var(--ink); }
+.slot-window { width: 84px; height: 96px; overflow: hidden; border: 4px solid var(--ink); border-radius: 10px; background: white; position: relative; }
+.slot-window::before, .slot-window::after { content: ""; position: absolute; left: 0; right: 0; height: 16px; z-index: 2; pointer-events: none; }
+.slot-window::before { top: 0; background: linear-gradient(rgba(36,31,27,.22), transparent); }
+.slot-window::after { bottom: 0; background: linear-gradient(transparent, rgba(36,31,27,.22)); }
+.slot-track { transition-property: transform; transition-timing-function: cubic-bezier(.1,.72,.12,1); }
+.slot-window:nth-child(1) .slot-track { transition-duration: 1.45s; }
+.slot-window:nth-child(2) .slot-track { transition-duration: 1.95s; }
+.slot-window:nth-child(3) .slot-track { transition-duration: 2.45s; }
+.slot-face { width: 76px; height: 96px; display: grid; place-items: center; font-size: 34px; font-weight: 950; line-height: 1; }
+.slot-legend { display: grid; gap: 7px; width: 100%; margin: 30px auto -5px !important; }
+.slot-legend > span { min-width: 0; display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid rgba(36,31,27,.3); border-radius: 8px; background: rgba(255,255,255,.7); overflow: hidden; }
+.slot-legend i { flex: 0 0 20px; height: 20px; display: grid; place-items: center; border: 1px solid var(--ink); border-radius: 50%; font-size: 9px; font-style: normal; font-weight: 950; }
+.slot-legend b { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; }
+.game-slot > p { margin-top: 3px !important; }
 
 .result { margin: 70px 0 40px; padding: 55px 20px; text-align: center; border: 2px solid var(--ink); border-radius: 26px; background: var(--orange); color: white; box-shadow: 9px 9px 0 var(--ink); scroll-margin-top: 90px; }
 .result-kicker { display: inline-block; padding: 6px 10px; background: var(--yellow); color: var(--ink); border-radius: 7px; font-size: 12px; font-weight: 900; }
@@ -204,7 +217,7 @@ footer strong { color: var(--ink); } footer small { margin-left: auto; }
   .menu-toolbar { align-items: start; gap: 10px; }.menu-toolbar p { max-width: 55%; }
   .game-picker { grid-template-columns: repeat(3, 1fr); }.game-stage { padding-inline: 14px; }
   .draw-cards { width: 100%; gap: 6px; }.draw-card { width: min(62px, 16vw); height: 104px; }.draw-card i { border-width: 3px; box-shadow: 3px 4px 0 var(--ink); }
-  .slots i { width: 67px; }.ladder-wrap { width: 100%; }.ladder-results b { width: calc(100% - 4px); padding-inline: 2px; font-size: 8px; }
+  .slots { gap: 5px; padding: 10px; }.slot-window { width: 68px; height: 96px; }.slot-face { width: 60px; height: 96px; font-size: 28px; }.ladder-wrap { width: 100%; }.ladder-results b { width: calc(100% - 4px); padding-inline: 2px; font-size: 8px; }
   footer { align-items: start; flex-wrap: wrap; } footer small { width: 100%; margin: 0; }
 }
 

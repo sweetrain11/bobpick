@@ -100,6 +100,8 @@ export default function Home() {
   const [winner, setWinner] = useState<Menu | null>(null);
   const [ladderStart, setLadderStart] = useState(0);
   const [ladderLevel, setLadderLevel] = useState(0);
+  const [drawReady, setDrawReady] = useState(false);
+  const [drawPicked, setDrawPicked] = useState<number | null>(null);
 
   const results = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -148,6 +150,8 @@ export default function Home() {
     setRestaurant(item);
     setCandidates(item.menus.map((menu) => menu.id));
     setWinner(null);
+    setDrawReady(false);
+    setDrawPicked(null);
     window.setTimeout(() => document.getElementById("menu-section")?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
@@ -156,13 +160,48 @@ export default function Home() {
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
     );
     setWinner(null);
+    setDrawReady(false);
+    setDrawPicked(null);
+  }
+
+  function randomMenu() {
+    const values = new Uint32Array(1);
+    crypto.getRandomValues(values);
+    return candidateMenus[values[0] % candidateMenus.length];
+  }
+
+  function shuffleDraw() {
+    if (candidateMenus.length < 2 || playing) return;
+    setWinner(null);
+    setDrawReady(false);
+    setDrawPicked(null);
+    setPlaying(true);
+    window.setTimeout(() => {
+      setPlaying(false);
+      setDrawReady(true);
+    }, 1200);
+  }
+
+  function pickDraw(index: number) {
+    if (!drawReady || playing) return;
+    const picked = randomMenu();
+    setDrawPicked(index);
+    setPlaying(true);
+    window.setTimeout(() => {
+      setWinner(picked);
+      setPlaying(false);
+      setDrawReady(false);
+      window.setTimeout(() => document.getElementById("result")?.scrollIntoView({ behavior: "smooth" }), 60);
+    }, 950);
   }
 
   function runGame() {
     if (candidateMenus.length < 2 || playing) return;
-    const values = new Uint32Array(1);
-    crypto.getRandomValues(values);
-    const picked = candidateMenus[values[0] % candidateMenus.length];
+    if (game === "draw") {
+      shuffleDraw();
+      return;
+    }
+    const picked = randomMenu();
     if (game === "ladder") {
       const target = ladderMenus.findIndex((menu) => menu.id === picked.id);
       const matchingStart = ladderMenus.findIndex((_, index) => ladderPosition(index, ladderRungs) === target);
@@ -184,6 +223,8 @@ export default function Home() {
     setRestaurant(null);
     setCandidates([]);
     setWinner(null);
+    setDrawReady(false);
+    setDrawPicked(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -296,14 +337,14 @@ export default function Home() {
             <div className="game-layout">
               <div className="game-picker" role="radiogroup" aria-label="게임 선택">
                 {games.map((item) => (
-                  <button key={item.id} role="radio" aria-checked={game === item.id} className={game === item.id ? "active" : ""} onClick={() => { setGame(item.id); setWinner(null); }}>
+                  <button key={item.id} role="radio" aria-checked={game === item.id} className={game === item.id ? "active" : ""} onClick={() => { setGame(item.id); setWinner(null); setDrawReady(false); setDrawPicked(null); }}>
                     <span>{item.icon}</span><strong>{item.name}</strong><small>{item.copy}</small>
                   </button>
                 ))}
               </div>
               <div className={`game-stage game-${game} ${playing ? "playing" : ""}`}>
                 <span className="stage-label">{currentGame.name}</span>
-                <div className="game-visual" aria-hidden="true">
+                <div className="game-visual">
                   {game === "roulette" && <div className="roulette"><span /></div>}
                   {game === "ladder" && (
                     <div className="ladder-wrap">
@@ -340,12 +381,40 @@ export default function Home() {
                       </div>
                     </div>
                   )}
-                  {game === "draw" && <div className="draw-cards">{candidateMenus.slice(0, 4).map((menu) => <i key={menu.id}>?</i>)}</div>}
+                  {game === "draw" && (
+                    <div className={`draw-cards ${playing && drawPicked === null ? "shuffling" : ""} ${drawReady ? "ready" : ""}`}>
+                      {candidateMenus.slice(0, 5).map((menu, index) => (
+                        <button
+                          type="button"
+                          className={`draw-card ${drawPicked === index ? "picked" : ""}`}
+                          key={menu.id}
+                          onClick={() => pickDraw(index)}
+                          disabled={!drawReady || playing}
+                          aria-label={`${index + 1}번 제비 선택`}
+                        >
+                          <span className="draw-card-inner">
+                            <i className="draw-card-back"><b>{index + 1}</b><em>?</em></i>
+                            <i className="draw-card-front"><em>★</em><b>당첨!</b></i>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   {game === "scratch" && <div className="scratch-card"><b>오늘의 메뉴</b><span>긁어서 확인</span></div>}
                   {game === "slot" && <div className="slots"><i>밥</i><i>면</i><i>픽</i></div>}
                 </div>
-                <p>{playing ? "두근두근… 메뉴를 고르는 중이에요!" : `${candidateMenus.length}개 후보 중 하나를 골라볼게요.`}</p>
-                <button className="play-button" onClick={runGame} disabled={playing}>{playing ? "결정 중…" : `${currentGame.name} 시작`}</button>
+                <p>
+                  {game === "draw"
+                    ? playing
+                      ? drawPicked === null ? "제비를 골고루 섞는 중이에요…" : "선택한 제비를 확인하고 있어요!"
+                      : drawReady ? "마음이 가는 제비 한 장을 직접 골라보세요." : "먼저 제비를 섞어볼까요?"
+                    : playing ? "두근두근… 메뉴를 고르는 중이에요!" : `${candidateMenus.length}개 후보 중 하나를 골라볼게요.`}
+                </p>
+                <button className="play-button" onClick={runGame} disabled={playing}>
+                  {game === "draw"
+                    ? playing ? drawPicked === null ? "섞는 중…" : "확인 중…" : drawReady ? "다시 섞기" : "제비 섞기"
+                    : playing ? "결정 중…" : `${currentGame.name} 시작`}
+                </button>
               </div>
             </div>
           </section>

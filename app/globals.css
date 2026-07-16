@@ -111,10 +111,15 @@ button { color: inherit; }
 .roulette span { position: absolute; width: 34px; height: 34px; left: 63px; top: 63px; border: 8px solid var(--ink); border-radius: 50%; background: var(--yellow); }
 .playing .roulette { animation: spin 2.2s cubic-bezier(.12,.75,.2,1) both; }
 @keyframes spin { to { transform: rotate(1700deg); } }
-.ladder { width: min(440px, 95%); height: 175px; display: flex; justify-content: space-around; border-top: 5px solid var(--ink); border-bottom: 5px solid var(--ink); background: repeating-linear-gradient(90deg, transparent 0 17%, var(--ink) 17% 18%, transparent 18% 34%), repeating-linear-gradient(0deg, transparent 0 30px, var(--ink) 30px 34px, transparent 34px 65px); }
-.ladder i { background: white; border: 2px solid var(--ink); height: 32px; padding: 5px; font-style: normal; font-size: 11px; font-weight: 900; transform: translateY(-18px); }
-.playing .ladder { animation: jiggle .18s infinite alternate; }
-@keyframes jiggle { to { transform: translateY(4px); } }
+.ladder-wrap { width: min(500px, 92%); padding: 35px 16px 15px; }
+.ladder-board { width: 100%; height: 180px; position: relative; }
+.ladder-column { position: absolute; top: 0; bottom: 0; width: 0; z-index: 2; }
+.ladder-column > i { position: absolute; top: 0; bottom: 0; left: -2px; width: 4px; border-radius: 3px; background: var(--ink); }
+.ladder-column > b { position: absolute; left: 0; top: -35px; min-width: 48px; max-width: 70px; padding: 6px 7px; border: 2px solid var(--ink); border-radius: 7px; background: var(--paper); font-size: 10px; line-height: 1; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform: translateX(-50%); }
+.ladder-rung { position: absolute; height: 4px; border-radius: 3px; background: var(--ink); transform: translateY(-2px); z-index: 3; }
+.ladder-runner { position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px; border: 4px solid white; border-radius: 50%; background: var(--orange); box-shadow: 0 2px 0 var(--ink); z-index: 5; transition: left .2s ease, top .2s linear; }
+.ladder-runner::after { content: ""; position: absolute; inset: -8px; border: 2px solid var(--orange); border-radius: 50%; animation: runnerPulse .65s infinite; }
+@keyframes runnerPulse { 70%,100% { transform: scale(1.45); opacity: 0; } }
 .draw-cards { display: flex; gap: 12px; perspective: 600px; }
 .draw-cards i { width: 86px; height: 130px; display: grid; place-items: center; border: 4px solid var(--ink); border-radius: 11px; background: var(--orange); color: white; font-size: 42px; font-style: normal; box-shadow: 5px 6px 0 var(--ink); }
 .playing .draw-cards i { animation: cardflip .5s alternate infinite; }
@@ -163,7 +168,7 @@ footer strong { color: var(--ink); } footer small { margin-left: auto; }
   .menu-toolbar { align-items: start; gap: 10px; }.menu-toolbar p { max-width: 55%; }
   .game-picker { grid-template-columns: repeat(3, 1fr); }.game-stage { padding-inline: 14px; }
   .draw-cards i { width: 60px; height: 100px; }.draw-cards i:nth-child(4) { display: none; }
-  .slots i { width: 67px; }.ladder { width: 95%; }
+  .slots i { width: 67px; }.ladder-wrap { width: 96%; padding-inline: 6px; }.ladder-column > b { min-width: 39px; max-width: 48px; padding-inline: 4px; font-size: 9px; }
   footer { align-items: start; flex-wrap: wrap; } footer small { width: 100%; margin: 0; }
 }
 

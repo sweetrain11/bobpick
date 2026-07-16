@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Menu = { id: string; name: string; price: number; note: string };
 type Restaurant = {
@@ -81,6 +81,15 @@ const games = [
 
 const money = (value: number) => new Intl.NumberFormat("ko-KR").format(value) + "원";
 
+function ladderPosition(start: number, rungs: number[], completed = rungs.length) {
+  let position = start;
+  rungs.slice(0, completed).forEach((from) => {
+    if (position === from) position += 1;
+    else if (position === from + 1) position -= 1;
+  });
+  return position;
+}
+
 export default function Home() {
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
@@ -89,6 +98,8 @@ export default function Home() {
   const [game, setGame] = useState("roulette");
   const [playing, setPlaying] = useState(false);
   const [winner, setWinner] = useState<Menu | null>(null);
+  const [ladderStart, setLadderStart] = useState(0);
+  const [ladderLevel, setLadderLevel] = useState(0);
 
   const results = useMemo(() => {
     const keyword = query.trim().toLowerCase();
@@ -102,8 +113,31 @@ export default function Home() {
   }, [query]);
 
   const candidateMenus = restaurant?.menus.filter((menu) => candidates.includes(menu.id)) ?? [];
+  const ladderMenus = candidateMenus.slice(0, 6);
+  const ladderRungs = useMemo(() => {
+    const count = ladderMenus.length;
+    if (count < 2) return [];
+    const pattern = [0, 2, 1, 3, 0, 4, 2, 1];
+    return pattern.slice(0, Math.max(5, count + 1)).map((value) => value % (count - 1));
+  }, [ladderMenus.length]);
+  const ladderMarker = ladderPosition(ladderStart, ladderRungs, ladderLevel);
   const currentGame = games.find((item) => item.id === game) ?? games[3];
   const step = winner ? 4 : restaurant ? (candidates.length >= 2 ? 3 : 2) : searched ? 1 : 0;
+
+  useEffect(() => {
+    if (!playing || game !== "ladder") return;
+    setLadderLevel(0);
+    const timer = window.setInterval(() => {
+      setLadderLevel((level) => {
+        if (level >= ladderRungs.length) {
+          window.clearInterval(timer);
+          return level;
+        }
+        return level + 1;
+      });
+    }, 280);
+    return () => window.clearInterval(timer);
+  }, [playing, game, ladderRungs.length]);
 
   function search() {
     setSearched(true);
@@ -129,13 +163,19 @@ export default function Home() {
     const values = new Uint32Array(1);
     crypto.getRandomValues(values);
     const picked = candidateMenus[values[0] % candidateMenus.length];
+    if (game === "ladder") {
+      const target = ladderMenus.findIndex((menu) => menu.id === picked.id);
+      const matchingStart = ladderMenus.findIndex((_, index) => ladderPosition(index, ladderRungs) === target);
+      setLadderStart(Math.max(0, matchingStart));
+      setLadderLevel(0);
+    }
     setPlaying(true);
     setWinner(null);
     window.setTimeout(() => {
       setWinner(picked);
       setPlaying(false);
       window.setTimeout(() => document.getElementById("result")?.scrollIntoView({ behavior: "smooth" }), 60);
-    }, game === "roulette" ? 2200 : 1600);
+    }, game === "roulette" || game === "ladder" ? 2200 : 1600);
   }
 
   function resetAll() {
@@ -265,7 +305,41 @@ export default function Home() {
                 <span className="stage-label">{currentGame.name}</span>
                 <div className="game-visual" aria-hidden="true">
                   {game === "roulette" && <div className="roulette"><span /></div>}
-                  {game === "ladder" && <div className="ladder">{candidateMenus.slice(0, 5).map((menu) => <i key={menu.id}>{menu.name.slice(0, 2)}</i>)}</div>}
+                  {game === "ladder" && (
+                    <div className="ladder-wrap">
+                      <div className="ladder-board">
+                        {ladderMenus.map((menu, index) => {
+                          const left = `${(index / (ladderMenus.length - 1)) * 100}%`;
+                          return (
+                            <span className="ladder-column" style={{ left }} key={menu.id}>
+                              <b>{menu.name.slice(0, 4)}</b>
+                              <i />
+                            </span>
+                          );
+                        })}
+                        {ladderRungs.map((from, index) => (
+                          <span
+                            className="ladder-rung"
+                            key={`${from}-${index}`}
+                            style={{
+                              left: `${(from / (ladderMenus.length - 1)) * 100}%`,
+                              top: `${((index + 1) / (ladderRungs.length + 1)) * 100}%`,
+                              width: `${100 / (ladderMenus.length - 1)}%`,
+                            }}
+                          />
+                        ))}
+                        {playing && (
+                          <span
+                            className="ladder-runner"
+                            style={{
+                              left: `${(ladderMarker / (ladderMenus.length - 1)) * 100}%`,
+                              top: `${(ladderLevel / (ladderRungs.length + 1)) * 100}%`,
+                            }}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
                   {game === "draw" && <div className="draw-cards">{candidateMenus.slice(0, 4).map((menu) => <i key={menu.id}>?</i>)}</div>}
                   {game === "scratch" && <div className="scratch-card"><b>오늘의 메뉴</b><span>긁어서 확인</span></div>}
                   {game === "slot" && <div className="slots"><i>밥</i><i>면</i><i>픽</i></div>}
